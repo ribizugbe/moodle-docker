@@ -1,0 +1,110 @@
+services:
+
+  mariadb:
+    image: mariadb:11.8
+    container_name: moodle-db
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: Africa/Lagos
+
+    volumes:
+      - ./mariadb:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - moodle-net
+
+
+  redis:
+    image: redis:7
+    container_name: moodle-redis
+    restart: unless-stopped
+
+    command: redis-server --appendonly yes
+
+    volumes:
+      - redis-data:/data
+
+    networks:
+      - moodle-net
+
+
+  moodle:
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: moodle
+    restart: unless-stopped
+
+    ports:
+      - "8080:80"
+
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    environment:
+      TZ: Africa/Lagos
+
+      MOODLE_DB_HOST: moodle-db
+      MOODLE_DB_NAME: ${MYSQL_DATABASE}
+      MOODLE_DB_USER: ${MYSQL_USER}
+      MOODLE_DB_PASSWORD: ${MYSQL_PASSWORD}
+
+    volumes:
+      - ./moodle:/var/www/html
+      - ./moodledata:/var/www/moodledata
+      - ./moodle.ini:/usr/local/etc/php/conf.d/moodle.ini
+
+    networks:
+      - moodle-net
+
+
+  phpmyadmin:
+
+    image: phpmyadmin/phpmyadmin:latest
+
+    container_name: phpmyadmin
+
+    restart: unless-stopped
+
+    ports:
+      - "8081:80"
+
+    environment:
+      PMA_HOST: moodle-db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Africa/Lagos
+
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+    networks:
+      - moodle-net
+
+
+networks:
+
+  moodle-net:
+    driver: bridge
+
+
+volumes:
+
+  redis-data:

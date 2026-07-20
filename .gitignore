@@ -1,0 +1,27 @@
+# Moodle secrets
+moodle/config.php
+
+# Environment variables
+.env
+
+# Database
+mariadb/
+
+# Moodle uploaded files
+moodledata/
+
+# Redis
+redis-data/
+
+# Docker temporary files
+*.log
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
