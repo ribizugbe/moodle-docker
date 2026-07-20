@@ -1,3 +1,14 @@
+# Moodle download archives
+*.tgz
+*.tar.gz
+*.zip
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
 # Moodle secrets
 moodle/config.php
 
